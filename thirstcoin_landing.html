@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THIRSTCOIN - THE THIRST IS REAL | $THIRST on Solana</title>
+    <meta name="description" content="THIRSTCOIN - Community-driven memecoin on Solana. Join the thirsty collective and quench your crypto thirst!">
+    <meta name="keywords" content="THIRSTCOIN, memecoin, Solana, crypto, DeFi, community">
+    <meta property="og:title" content="THIRSTCOIN - THE THIRST IS REAL">
+    <meta property="og:description" content="Community-driven memecoin on Solana. Join the thirsty collective!">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="./content/ThirstCoinTwerk.mp4">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="THIRSTCOIN - THE THIRST IS REAL">
+    <meta name="twitter:description" content="Community-driven memecoin on Solana">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono:wght@400&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: #ffffff;
+            font-family: 'Share Tech Mono', monospace;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Animated background scanlines */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(255, 255, 255, 0.02) 2px,
+                rgba(255, 255, 255, 0.02) 4px
+            );
+            pointer-events: none;
+            z-index: 1;
+            animation: scanlines 0.1s linear infinite;
+        }
+        
+        @keyframes scanlines {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(4px); }
+        }
+        
+        .container {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        /* Neon text effects with phasing animation */
+        .neon-pink {
+            color: #ffffff;
+            animation: neon-pink-pulse 3s ease-in-out infinite alternate;
+        }
+        
+        .neon-green {
+            color: #ffffff;
+            animation: neon-green-pulse 2.5s ease-in-out infinite alternate;
+        }
+        
+        .neon-blue {
+            color: #ffffff;
+            animation: neon-blue-pulse 3.5s ease-in-out infinite alternate;
+        }
+        
+        .neon-yellow {
+            color: #ffffff;
+            animation: neon-yellow-pulse 2.8s ease-in-out infinite alternate;
+        }
+        
+        @keyframes neon-pink-pulse {
+            0% { 
+                color: #ffffff;
+                text-shadow: none;
+            }
+            50% {
+                color: #ff0080;
+                text-shadow: 
+                    0 0 5px #ff0080,
+                    0 0 10px #ff0080,
+                    0 0 20px #ff0080,
+                    0 0 40px #ff0080;
+            }
+            100% { 
+                color: #ffffff;
+                text-shadow: none;
+            }
+        }
+        
+        @keyframes neon-green-pulse {
+            0% { 
+                color: #ffffff;
+                text-shadow: none;
+            }
+            50% {
+                color: #00ff00;
+                text-shadow: 
+                    0 0 5px #00ff00,
+                    0 0 10px #00ff00,
+                    0 0 20px #00ff00,
+                    0 0 40px #00ff00;
+            }
+            100% { 
+                color: #ffffff;
+                text-shadow: none;
+            }
+        }
+        
+        @keyframes neon-blue-pulse {
+            0% { 
+                color: #ffffff;
+                text-shadow: none;
+            }
+            50% {
+                color: #00ffff;
+                text-shadow: 
+                    0 0 5px #00ffff,
+                    0 0 10px #00ffff,
+                    0 0 20px #00ffff,
+                    0 0 40px #00ffff;
+            }
+            100% { 
+                color: #ffffff;
+                text-shadow: none;
+            }
+        }
+        
+        @keyframes neon-yellow-pulse {
+            0% { 
+                color: #ffffff;
+                text-shadow: none;
+            }
+            50% {
+                color: #ffff00;
+                text-shadow: 
+                    0 0 5px #ffff00,
+                    0 0 10px #ffff00,
+                    0 0 20px #ffff00,
+                    0 0 40px #ffff00;
+            }
+            100% { 
+                color: #ffffff;
+                text-shadow: none;
+            }
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: glitch 2s infinite;
+        }
+        
+        .main-title {
+            font-size: clamp(3rem, 8vw, 8rem);
+            font-weight: bold;
+            margin-bottom: 1rem;
+            letter-spacing: 0.2em;
+        }
+        
+        .subtitle {
+            font-size: clamp(1rem, 3vw, 2rem);
+            margin-bottom: 2rem;
+        }
+        
+        /* ASCII Art Section */
+        .ascii-section {
+            text-align: center;
+            margin: 4rem 0;
+        }
+        
+        .ascii-art {
+            font-size: clamp(0.3rem, 1vw, 0.8rem);
+            line-height: 1;
+            white-space: pre;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .ascii-art:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Action buttons */
+        .action-section {
+            text-align: center;
+            margin: 4rem 0;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            margin: 1rem;
+            border: 2px solid;
+            background: transparent;
+            color: inherit;
+            text-decoration: none;
+            font-family: inherit;
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: currentColor;
+            opacity: 0.1;
+            transition: left 0.3s ease;
+        }
+        
+        .btn:hover::before {
+            left: 0;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Community section */
+        .community-section {
+            margin: 4rem 0;
+            text-align: center;
+        }
+        
+        .community-title {
+            font-size: clamp(2rem, 5vw, 4rem);
+            margin-bottom: 2rem;
+        }
+        
+        .thirsty-quotes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .quote {
+            padding: 2rem;
+            border: 1px solid currentColor;
+            background: rgba(0, 0, 0, 0.7);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .quote:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Terminal section */
+        .terminal {
+            background: #000000;
+            border: 1px solid #333333;
+            padding: 2rem;
+            margin: 3rem auto;
+            max-width: 800px;
+            font-size: 1rem;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+        
+        .terminal-header {
+            border-bottom: 1px solid #333333;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            color: #888888;
+        }
+        
+        .terminal-line {
+            margin: 0.5rem 0;
+            color: #ffffff;
+        }
+        
+        .prompt {
+            color: #00ff00;
+        }
+        
+        /* Glitch animation */
+        @keyframes glitch {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-2px); }
+            40% { transform: translateX(2px); }
+            60% { transform: translateX(-2px); }
+            80% { transform: translateX(2px); }
+            100% { transform: translateX(0); }
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .ascii-art {
+                font-size: clamp(0.2rem, 2vw, 0.5rem);
+            }
+            
+            .btn {
+                display: block;
+                margin: 1rem auto;
+                max-width: 300px;
+            }
+
+            .hero-video video {
+                max-height: 250px;
+            }
+
+            .price-display {
+                font-size: 2rem;
+            }
+
+            .price-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .media-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .tokenomics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .thirsty-quotes {
+                grid-template-columns: 1fr;
+            }
+
+            .main-title {
+                font-size: clamp(2rem, 6vw, 5rem);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tokenomics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .price-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Typing animation */
+        .typing {
+            border-right: 2px solid;
+            animation: typing 3s steps(40), blink 0.5s step-end infinite alternate;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+        
+        @keyframes blink {
+            50% { border-color: transparent; }
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 5rem;
+            padding: 2rem;
+            border-top: 1px solid #333;
+        }
+
+        /* Media Gallery Styles */
+        .media-gallery {
+            margin: 4rem 0;
+            text-align: center;
+        }
+
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .media-item {
+            border: 2px solid;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.8);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .media-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 20px 40px rgba(255, 255, 255, 0.2);
+        }
+
+        .media-item img, .media-item video {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        /* Price Ticker */
+        .price-ticker {
+            background: linear-gradient(45deg, #000, #111);
+            border: 2px solid;
+            padding: 2rem;
+            margin: 3rem 0;
+            text-align: center;
+            animation: pulse-border 3s infinite;
+        }
+
+        @keyframes pulse-border {
+            0% { border-color: #ff0080; }
+            25% { border-color: #00ff00; }
+            50% { border-color: #00ffff; }
+            75% { border-color: #ffff00; }
+            100% { border-color: #ff0080; }
+        }
+
+        .price-display {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+
+        .price-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .stat-item {
+            padding: 1rem;
+            border: 1px solid #333;
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        /* Tokenomics */
+        .tokenomics {
+            margin: 4rem 0;
+            text-align: center;
+        }
+
+        .tokenomics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .tokenomics-item {
+            padding: 2rem;
+            border: 2px solid;
+            background: rgba(0, 0, 0, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .tokenomics-item:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Copy button */
+        .copy-btn {
+            background: transparent;
+            border: 1px solid currentColor;
+            color: inherit;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-family: inherit;
+            margin-left: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: currentColor;
+            color: #000;
+        }
+
+        /* Hero video */
+        .hero-video {
+            text-align: center;
+            margin: 3rem 0;
+        }
+
+        .hero-video video {
+            max-width: 100%;
+            max-height: 400px;
+            border: 2px solid;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="main-title neon-pink">THIRSTCOIN</h1>
+            <p class="subtitle neon-green typing">THE THIRST IS REAL AF</p>
+        </header>
+
+        <section class="hero-video">
+            <video autoplay muted loop class="neon-pink">
+                <source src="./content/ThirsGirlDancingHEADER.MOV" type="video/quicktime">
+                <source src="./content/WelcomeDance.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </section>
+
+        <section class="price-ticker">
+            <h2 class="neon-yellow" style="font-size: 2rem; margin-bottom: 1rem;">LIVE THIRST LEVELS</h2>
+            <div class="price-display neon-green" id="price">$0.00420</div>
+            <p class="neon-pink">Contract: TH1R5T...c01n 
+                <button class="copy-btn neon-pink" onclick="copyContract()">COPY</button>
+            </p>
+            <div class="price-stats">
+                <div class="stat-item neon-blue">
+                    <h3>Market Cap</h3>
+                    <p id="marketCap">$69,420</p>
+                </div>
+                <div class="stat-item neon-yellow">
+                    <h3>24h Volume</h3>
+                    <p id="volume">$13,337</p>
+                </div>
+                <div class="stat-item neon-green">
+                    <h3>Holders</h3>
+                    <p id="holders">1,337</p>
+                </div>
+                <div class="stat-item neon-pink">
+                    <h3>Thirst Level</h3>
+                    <p>MAXIMUM 🚰</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="ascii-section">
+            <div class="ascii-art neon-pink" onclick="changeColor(this)">
+    ██████╗ ██╗   ██╗██╗   ██╗
+    ██╔══██╗██║   ██║╚██╗ ██╔╝
+    ██████╔╝██║   ██║ ╚████╔╝ 
+    ██╔══██╗██║   ██║  ╚██╔╝  
+    ██████╔╝╚██████╔╝   ██║   
+    ╚═════╝  ╚═════╝    ╚═╝   
+    
+    ██████╗ ██╗   ██╗██╗   ██╗
+    ██╔══██╗██║   ██║╚██╗ ██╔╝
+    ██████╔╝██║   ██║ ╚████╔╝ 
+    ██╔══██╗██║   ██║  ╚██╔╝  
+    ██████╔╝╚██████╔╝   ██║   
+    ╚═════╝  ╚═════╝    ╚═╝   
+    
+    ██████╗ ██╗   ██╗██╗   ██╗
+    ██╔══██╗██║   ██║╚██╗ ██╔╝
+    ██████╔╝██║   ██║ ╚████╔╝ 
+    ██╔══██╗██║   ██║  ╚██╔╝  
+    ██████╔╝╚██████╔╝   ██║   
+    ╚═════╝  ╚═════╝    ╚═╝   
+            </div>
+        </section>
+        
+        <section class="action-section">
+            <h2 class="neon-yellow" style="font-size: 2.5rem; margin-bottom: 2rem;">READY TO HYDRATE?</h2>
+            <button class="btn neon-pink" onclick="quenchThirst()">QUENCH THE THIRST</button>
+            <button class="btn neon-green" onclick="stayThirsty()">STAY THIRSTY</button>
+            <button class="btn neon-blue" onclick="joinCult()">JOIN THE CULT</button>
+        </section>
+        
+        <section class="tokenomics">
+            <h2 class="community-title neon-pink">THIRSTONOMICS</h2>
+            <p class="neon-yellow" style="font-size: 1.3rem; margin-bottom: 2rem;">
+                100% Fair Launch | 0% Tax | 100% Community Owned
+            </p>
+            <div class="tokenomics-grid">
+                <div class="tokenomics-item neon-pink">
+                    <h3>Total Supply</h3>
+                    <p style="font-size: 2rem; margin: 1rem 0;">1,000,000,000</p>
+                    <p>THIRST Tokens</p>
+                </div>
+                <div class="tokenomics-item neon-green">
+                    <h3>Liquidity Pool</h3>
+                    <p style="font-size: 2rem; margin: 1rem 0;">100%</p>
+                    <p>Locked Forever</p>
+                </div>
+                <div class="tokenomics-item neon-blue">
+                    <h3>Team Allocation</h3>
+                    <p style="font-size: 2rem; margin: 1rem 0;">0%</p>
+                    <p>We're Thirsty Too</p>
+                </div>
+                <div class="tokenomics-item neon-yellow">
+                    <h3>Transaction Tax</h3>
+                    <p style="font-size: 2rem; margin: 1rem 0;">0%</p>
+                    <p>Pure Freedom</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="media-gallery">
+            <h2 class="community-title neon-blue">THIRST CONTENT</h2>
+            <p class="neon-green" style="font-size: 1.3rem; margin-bottom: 2rem;">
+                Community-generated thirst content and memes
+            </p>
+            <div class="media-grid">
+                <div class="media-item neon-pink">
+                    <video controls muted>
+                        <source src="./content/ThirscoinBUYheader.MOV" type="video/quicktime">
+                        Buy Thirstcoin Video
+                    </video>
+                    <p style="margin-top: 1rem;">BUY THIRST 🚰</p>
+                </div>
+                <div class="media-item neon-green">
+                    <video controls muted>
+                        <source src="./content/ThirstCoinTwerk.mp4" type="video/mp4">
+                        Thirstcoin Twerk
+                    </video>
+                    <p style="margin-top: 1rem;">COMMUNITY VIBES 💧</p>
+                </div>
+                <div class="media-item neon-blue">
+                    <img src="./content/handsUp.jpg" alt="Hands Up for Thirst">
+                    <p style="margin-top: 1rem;">HANDS UP FOR THIRST 🙌</p>
+                </div>
+                <div class="media-item neon-yellow">
+                    <img src="./content/MirroredGirls.jpg" alt="Mirrored Community">
+                    <p style="margin-top: 1rem;">DOUBLE THE THIRST 👯</p>
+                </div>
+                <div class="media-item neon-pink">
+                    <img src="./content/Titties.jpg" alt="Community Art">
+                    <p style="margin-top: 1rem;">THIRSTY ART 🎨</p>
+                </div>
+                <div class="media-item neon-green">
+                    <img src="./content/ThongTits.jpg" alt="More Community Art">
+                    <p style="margin-top: 1rem;">PURE THIRST 💦</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="community-section">
+            <h2 class="community-title neon-green">THE THIRSTY COLLECTIVE</h2>
+            <p class="neon-yellow" style="font-size: 1.3rem; margin-bottom: 2rem;">
+                No roadmap. No promises. Just pure community-driven THIRST on Solana.
+            </p>
+            
+            <div class="thirsty-quotes">
+                <div class="quote neon-pink">
+                    <h3>"These bitches are THIRSTY!"</h3>
+                    <p>- Anonymous Degen</p>
+                </div>
+                <div class="quote neon-green">
+                    <h3>"Built by degenerates, for degenerates"</h3>
+                    <p>- The Community</p>
+                </div>
+                <div class="quote neon-blue">
+                    <h3>"Hydration Station activated"</h3>
+                    <p>- THIRST Protocol</p>
+                </div>
+                <div class="quote neon-yellow">
+                    <h3>"Fast as Solana, thirsty as hell"</h3>
+                    <p>- SOL Degen</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="terminal">
+            <div class="terminal-header">
+                THIRST_TERMINAL_V1.0 - SOLANA_POWERED - COMMUNITY_OWNED
+            </div>
+            <div class="terminal-line">
+                <span class="prompt">thirsty@solana:~$</span> <span class="neon-yellow">whoami</span>
+            </div>
+            <div class="terminal-line">
+                <span class="neon-green">THIRSTY_DEGEN</span>
+            </div>
+            <div class="terminal-line">
+                <span class="prompt">thirsty@solana:~$</span> <span class="neon-yellow">cat /proc/thirst_levels</span>
+            </div>
+            <div class="terminal-line">
+                <span class="neon-pink">ERROR: THIRST_LEVELS_CRITICAL - HYDRATION_NEEDED</span>
+            </div>
+            <div class="terminal-line">
+                <span class="prompt">thirsty@solana:~$</span> <span class="neon-yellow">solana balance</span>
+            </div>
+            <div class="terminal-line">
+                <span style="color: #ffffff;">0.0001 SOL</span> <span class="neon-blue">(broke but thirsty)</span>
+            </div>
+            <div class="terminal-line">
+                <span class="prompt">thirsty@solana:~$</span> <span class="neon-yellow">drink_water</span>
+            </div>
+            <div class="terminal-line">
+                <span class="neon-blue">bash: drink_water: command not found</span>
+            </div>
+            <div class="terminal-line">
+                <span class="prompt">thirsty@solana:~$</span> <span class="neon-green typing">buy_thirstcoin --amount=ALL</span>
+            </div>
+        </section>
+        
+        <section class="action-section">
+            <h2 class="neon-pink" style="font-size: 2rem; margin-bottom: 2rem;">THIRST TRAP ACTIVATED</h2>
+            <div style="display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;">
+                <a href="https://t.me/thirstcoin_official" target="_blank" class="btn neon-green">
+                    📱 TELEGRAM
+                </a>
+                <a href="https://twitter.com/thirstcoin_sol" target="_blank" class="btn neon-pink">
+                    🐦 TWITTER
+                </a>
+                <a href="https://dexscreener.com/solana/thirstcoin" target="_blank" class="btn neon-yellow">
+                    📊 DEXSCREENER
+                </a>
+                <a href="https://raydium.io/swap" target="_blank" class="btn neon-blue">
+                    🌊 RAYDIUM
+                </a>
+                <button class="btn neon-green" onclick="copyContract()">
+                    📋 COPY CONTRACT
+                </button>
+            </div>
+        </section>
+        
+        <footer class="footer">
+            <div class="ascii-art neon-green" style="font-size: 0.8rem;">
+                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                 ░ THIRSTCOIN - COMMUNITY OWNED AF ░
+                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            </div>
+            <p class="neon-yellow" style="margin-top: 1rem;">
+                Built with 🚰 by the thirsty collective
+            </p>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem; color: #666;">
+                Solana Contract: TH1R5T...c01n | Built on Solana | Not financial advice, just pure THIRST
+            </p>
+        </footer>
+    </div>
+    
+    <script>
+        // Interactive functions
+        function changeColor(element) {
+            const colors = ['neon-pink', 'neon-green', 'neon-blue', 'neon-yellow'];
+            const currentColor = element.className.split(' ').find(cls => colors.includes(cls));
+            const currentIndex = colors.indexOf(currentColor);
+            const nextIndex = (currentIndex + 1) % colors.length;
+            
+            element.className = element.className.replace(currentColor, colors[nextIndex]);
+        }
+        
+        function quenchThirst() {
+            alert("🚰 THIRST QUENCHED! Welcome to the hydration station!");
+        }
+        
+        function stayThirsty() {
+            alert("💧 STAYING THIRSTY! The grind never stops!");
+        }
+        
+        function joinCult() {
+            alert("🔮 WELCOME TO THE THIRSTY COLLECTIVE! You're one of us now!");
+        }
+
+        function copyContract() {
+            const contractAddress = "TH1R5Tc01nSoLaNaThIrStCoInAdDrEsS123";
+            navigator.clipboard.writeText(contractAddress).then(() => {
+                alert("📋 Contract address copied to clipboard!");
+            }).catch(() => {
+                alert("❌ Failed to copy. Please copy manually: " + contractAddress);
+            });
+        }
+
+        // Live price simulation
+        function updatePrice() {
+            const basePrice = 0.00420;
+            const variation = (Math.random() - 0.5) * 0.0001;
+            const newPrice = Math.max(0, basePrice + variation);
+            document.getElementById('price').textContent = '$' + newPrice.toFixed(5);
+            
+            // Update other stats
+            const marketCap = Math.floor(69420 + (Math.random() - 0.5) * 10000);
+            const volume = Math.floor(13337 + (Math.random() - 0.5) * 5000);
+            const holders = Math.floor(1337 + Math.random() * 100);
+            
+            document.getElementById('marketCap').textContent = '$' + marketCap.toLocaleString();
+            document.getElementById('volume').textContent = '$' + volume.toLocaleString();
+            document.getElementById('holders').textContent = holders.toLocaleString();
+        }
+
+        // Update price every 3 seconds
+        setInterval(updatePrice, 3000);
+
+        // Initialize price on load
+        window.addEventListener('load', updatePrice);
+        
+        // Random glitch effect
+        setInterval(() => {
+            const elements = document.querySelectorAll('.neon-pink, .neon-green, .neon-blue, .neon-yellow');
+            const randomElement = elements[Math.floor(Math.random() * elements.length)];
+            randomElement.style.animation = 'glitch 0.3s ease-in-out';
+            setTimeout(() => {
+                randomElement.style.animation = '';
+            }, 300);
+        }, 3000);
+        
+        // Add some random thirsty messages
+        const thirstyMessages = [
+            "The thirst is spreading...",
+            "Hydration levels: CRITICAL",
+            "THIRST DETECTED",
+            "Stay hydrated, stay thirsty",
+            "Community thirst: MAXIMUM"
+        ];
+        
+        setInterval(() => {
+            console.log(thirstyMessages[Math.floor(Math.random() * thirstyMessages.length)]);
+        }, 5000);
+    </script>
+</body>
+</html>
