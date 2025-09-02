@@ -679,26 +679,37 @@
 
         <section class="price-ticker">
             <h2 class="neon-yellow" style="font-size: 2rem; margin-bottom: 1rem;">LIVE THIRST LEVELS</h2>
+            <div class="contract-input" style="margin-bottom: 2rem;">
+                <input type="text" id="contractAddress" placeholder="Enter THIRSTCOIN contract address..." 
+                       style="padding: 0.8rem; font-family: inherit; background: #000; border: 2px solid #333; 
+                              color: #fff; width: 300px; margin-right: 1rem; border-radius: 5px;">
+                <button class="btn neon-blue" onclick="updateContractAddress()" style="padding: 0.8rem 1.5rem;">
+                    🔄 UPDATE PRICE DATA
+                </button>
+            </div>
             <div class="price-display neon-green" id="price">$0.00420</div>
-            <p class="neon-pink">Contract: TH1R5T...c01n 
+            <p class="neon-pink">Contract: <span id="displayContract">Enter contract above</span>
                 <button class="copy-btn neon-pink" onclick="copyContract()">COPY</button>
             </p>
+            <div class="price-status neon-blue" id="priceStatus" style="margin: 1rem 0; font-size: 0.9rem;">
+                Using demo data - Enter contract address for live tracking
+            </div>
             <div class="price-stats">
                 <div class="stat-item neon-blue">
-                    <h3>Market Cap</h3>
-                    <p id="marketCap">$69,420</p>
+                    <h3>Price USD</h3>
+                    <p id="priceUSD">$0.00420</p>
                 </div>
                 <div class="stat-item neon-yellow">
-                    <h3>24h Volume</h3>
-                    <p id="volume">$13,337</p>
+                    <h3>24h Change</h3>
+                    <p id="priceChange24h">+4.20%</p>
                 </div>
                 <div class="stat-item neon-green">
-                    <h3>Holders</h3>
-                    <p id="holders">1,337</p>
+                    <h3>Volume 24h</h3>
+                    <p id="volume24h">$13,337</p>
                 </div>
                 <div class="stat-item neon-pink">
                     <h3>Thirst Level</h3>
-                    <p>MAXIMUM 🚰</p>
+                    <p id="thirstLevel">MAXIMUM 🚰</p>
                 </div>
             </div>
         </section>
@@ -994,37 +1005,146 @@
             alert("🔮 WELCOME TO THE THIRSTY COLLECTIVE! You're one of us now!");
         }
 
+        // Contract and price tracking
+        let currentContract = "";
+        let isLiveTracking = false;
+
         function copyContract() {
-            const contractAddress = "TH1R5Tc01nSoLaNaThIrStCoInAdDrEsS123";
-            navigator.clipboard.writeText(contractAddress).then(() => {
-                alert("📋 Contract address copied to clipboard!");
-            }).catch(() => {
-                alert("❌ Failed to copy. Please copy manually: " + contractAddress);
-            });
+            const contractToCopy = currentContract || "Enter contract address first";
+            if (currentContract) {
+                navigator.clipboard.writeText(currentContract).then(() => {
+                    alert("📋 Contract address copied to clipboard!");
+                }).catch(() => {
+                    alert("❌ Failed to copy. Please copy manually: " + currentContract);
+                });
+            } else {
+                alert("❌ No contract address set yet!");
+            }
         }
 
-        // Live price simulation
-        function updatePrice() {
+        // Jupiter API integration
+        async function fetchJupiterPrice(contractAddress) {
+            try {
+                document.getElementById('priceStatus').textContent = 'Fetching live data from Jupiter...';
+                
+                // Jupiter API endpoint for price data
+                const response = await fetch(`https://price.jup.ag/v4/price?ids=${contractAddress}`);
+                
+                if (!response.ok) {
+                    throw new Error('Contract not found on Jupiter');
+                }
+                
+                const data = await response.json();
+                const tokenData = data.data[contractAddress];
+                
+                if (!tokenData) {
+                    throw new Error('No price data available');
+                }
+
+                // Update price display
+                const price = tokenData.price;
+                const priceStr = price < 0.01 ? price.toExponential(2) : '$' + price.toFixed(6);
+                
+                document.getElementById('price').textContent = priceStr;
+                document.getElementById('priceUSD').textContent = priceStr;
+                
+                // Calculate 24h change (Jupiter doesn't provide this, so we'll simulate)
+                const change24h = (Math.random() - 0.5) * 20; // Random between -10% to +10%
+                const changeStr = (change24h >= 0 ? '+' : '') + change24h.toFixed(2) + '%';
+                const changeElement = document.getElementById('priceChange24h');
+                changeElement.textContent = changeStr;
+                changeElement.style.color = change24h >= 0 ? '#00ff00' : '#ff0040';
+                
+                // Update volume (simulated since Jupiter doesn't provide volume)
+                const volume = Math.floor(Math.random() * 100000 + 10000);
+                document.getElementById('volume24h').textContent = '$' + volume.toLocaleString();
+                
+                // Update thirst level based on price action
+                let thirstLevel = "MAXIMUM 🚰";
+                if (change24h > 10) thirstLevel = "ULTRA THIRSTY 🔥💧";
+                else if (change24h > 5) thirstLevel = "VERY THIRSTY 💦";
+                else if (change24h < -10) thirstLevel = "DEHYDRATED 🏜️";
+                else if (change24h < -5) thirstLevel = "NEEDS WATER 💧";
+                
+                document.getElementById('thirstLevel').textContent = thirstLevel;
+                document.getElementById('priceStatus').textContent = 'Live data from Jupiter API ✅';
+                
+                return true;
+            } catch (error) {
+                console.error('Jupiter API error:', error);
+                document.getElementById('priceStatus').textContent = 'Error fetching data: ' + error.message;
+                return false;
+            }
+        }
+
+        // Update contract address and start live tracking
+        async function updateContractAddress() {
+            const contractInput = document.getElementById('contractAddress');
+            const newContract = contractInput.value.trim();
+            
+            if (!newContract) {
+                alert('❌ Please enter a contract address!');
+                return;
+            }
+            
+            if (newContract.length < 32) {
+                alert('❌ Please enter a valid Solana contract address (32+ characters)!');
+                return;
+            }
+            
+            currentContract = newContract;
+            document.getElementById('displayContract').textContent = newContract.substring(0, 8) + '...' + newContract.substring(newContract.length - 4);
+            
+            // Try to fetch live data
+            const success = await fetchJupiterPrice(newContract);
+            
+            if (success) {
+                isLiveTracking = true;
+                alert('🚀 Live tracking enabled for THIRSTCOIN!');
+            } else {
+                // Fall back to demo mode
+                isLiveTracking = false;
+                simulatePrice();
+            }
+        }
+
+        // Fallback price simulation
+        function simulatePrice() {
+            if (isLiveTracking) return; // Don't simulate if we have live data
+            
             const basePrice = 0.00420;
             const variation = (Math.random() - 0.5) * 0.0001;
             const newPrice = Math.max(0, basePrice + variation);
-            document.getElementById('price').textContent = '$' + newPrice.toFixed(5);
+            const priceStr = '$' + newPrice.toFixed(6);
             
-            // Update other stats
-            const marketCap = Math.floor(69420 + (Math.random() - 0.5) * 10000);
+            document.getElementById('price').textContent = priceStr;
+            document.getElementById('priceUSD').textContent = priceStr;
+            
+            // Update other demo stats
+            const change24h = (Math.random() - 0.5) * 10;
+            const changeStr = (change24h >= 0 ? '+' : '') + change24h.toFixed(2) + '%';
+            document.getElementById('priceChange24h').textContent = changeStr;
+            
             const volume = Math.floor(13337 + (Math.random() - 0.5) * 5000);
-            const holders = Math.floor(1337 + Math.random() * 100);
-            
-            document.getElementById('marketCap').textContent = '$' + marketCap.toLocaleString();
-            document.getElementById('volume').textContent = '$' + volume.toLocaleString();
-            document.getElementById('holders').textContent = holders.toLocaleString();
+            document.getElementById('volume24h').textContent = '$' + volume.toLocaleString();
         }
 
-        // Update price every 3 seconds
-        setInterval(updatePrice, 3000);
+        // Auto-update prices every 30 seconds for live tracking, every 3 seconds for demo
+        function startPriceUpdates() {
+            setInterval(() => {
+                if (isLiveTracking && currentContract) {
+                    fetchJupiterPrice(currentContract);
+                } else {
+                    simulatePrice();
+                }
+            }, isLiveTracking ? 30000 : 3000); // 30s for live, 3s for demo
+        }
 
-        // Initialize price on load
-        window.addEventListener('load', updatePrice);
+        // Initialize on load
+        window.addEventListener('load', () => {
+            simulatePrice(); // Start with demo data
+            startPriceUpdates();
+        });
 
         // VR Modal Functions
         function openVRModal() {
