@@ -1084,14 +1084,24 @@
                             // DexScreener returns either a pairs array or tokens array
                             const tokenData = data.pairs?.[0] || data.tokens?.[0];
                             if (tokenData) {
+                                console.log('Raw DexScreener token data:', tokenData);
+                                
+                                // Extract transaction data for holder activity
+                                const txns24h = tokenData.txns?.h24;
+                                const totalTxns = txns24h ? (txns24h.buys || 0) + (txns24h.sells || 0) : 0;
+                                
                                 return {
                                     price: parseFloat(tokenData.priceUsd),
-                                    usd_market_cap: parseFloat(tokenData.marketCap),
+                                    usd_market_cap: parseFloat(tokenData.marketCap || tokenData.fdv),
                                     volume_24h_usd: parseFloat(tokenData.volume?.h24),
                                     price_change_24h: parseFloat(tokenData.priceChange?.h24),
                                     liquidity_usd: parseFloat(tokenData.liquidity?.usd),
                                     pair_address: tokenData.pairAddress,
                                     dex: tokenData.dexId,
+                                    total_transactions_24h: totalTxns,
+                                    buys_24h: txns24h?.buys || 0,
+                                    sells_24h: txns24h?.sells || 0,
+                                    pair_created_at: tokenData.pairCreatedAt,
                                     from_dexscreener: true
                                 };
                             }
@@ -1225,18 +1235,32 @@
                     // Volume with DexScreener data
                     if (additionalData.volume_24h_usd && additionalData.volume_24h_usd > 0) {
                         document.getElementById('volume').textContent = '$' + additionalData.volume_24h_usd.toLocaleString() + ' 📊';
+                    } else {
+                        document.getElementById('volume').textContent = '$0 📊';
+                    }
+                    
+                    // Use transaction count as proxy for holders activity
+                    if (additionalData.total_transactions_24h > 0) {
+                        const buyersSellers = additionalData.buys_24h + additionalData.sells_24h;
+                        document.getElementById('holders').textContent = `${additionalData.total_transactions_24h} txns (${additionalData.buys_24h}B/${additionalData.sells_24h}S)`;
+                    } else {
+                        document.getElementById('holders').textContent = 'No recent activity';
                     }
                     
                     // Add price change indicator
-                    if (additionalData.price_change_24h) {
+                    if (additionalData.price_change_24h !== undefined && !isNaN(additionalData.price_change_24h)) {
                         const changePercent = additionalData.price_change_24h;
                         const changeIcon = changePercent > 0 ? '🟢' : changePercent < 0 ? '🔴' : '⚪';
-                        priceElement.textContent += ` ${changeIcon}${Math.abs(changePercent).toFixed(2)}%`;
+                        priceElement.textContent += ` ${changeIcon}${Math.abs(changePercent).toFixed(1)}%`;
                     }
                     
-                    // Show liquidity info
+                    // Show additional info in console
                     if (additionalData.liquidity_usd) {
                         console.log(`Liquidity: $${additionalData.liquidity_usd.toLocaleString()}`);
+                    }
+                    if (additionalData.pair_created_at) {
+                        const created = new Date(additionalData.pair_created_at * 1000);
+                        console.log(`Pair created: ${created.toLocaleString()}`);
                     }
                 }
                 
@@ -1345,9 +1369,13 @@
                     manual_data: true 
                 });
                 
-                // Set volume and holders to indicate no live data available
-                document.getElementById('volume').textContent = 'N/A';
-                document.getElementById('holders').textContent = 'N/A';
+                // Only set N/A if we don't have any other data source active
+                if (document.getElementById('volume').textContent === 'Loading...') {
+                    document.getElementById('volume').textContent = 'N/A';
+                }
+                if (document.getElementById('holders').textContent === 'Loading...') {
+                    document.getElementById('holders').textContent = 'N/A';
+                }
             }
         }
 
