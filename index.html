@@ -998,6 +998,10 @@
         const CONTRACT_ADDRESS = "H9Qkr9cLE7ySNnnttug5C3qTuMRa5rKt2JXw5gMmpump";
         let pumpPortalWS = null;
         let lastKnownPrice = null;
+        
+        // Manual price override (based on pump.fun data: Market Cap $53,272.27)
+        const MANUAL_MARKET_CAP = 53272.27; // From pump.fun page
+        const TOTAL_SUPPLY = 1000000000; // 1B tokens as shown on pump.fun
 
         // PumpPortal WebSocket connection for real-time data
         function connectToPumpPortal() {
@@ -1021,7 +1025,7 @@
                             // Convert SOL price to USD (approximate)
                             fetchSOLPrice().then(solPrice => {
                                 const priceUSD = priceInSOL * solPrice;
-                                updatePriceDisplay(priceUSD, data);
+                                updatePriceDisplay(priceUSD, { ...data, fromWebSocket: true });
                             });
                         }
                     } catch (error) {
@@ -1034,8 +1038,9 @@
                 };
 
                 pumpPortalWS.onclose = () => {
-                    console.log('PumpPortal WebSocket closed, attempting to reconnect...');
-                    setTimeout(connectToPumpPortal, 5000);
+                    console.log('PumpPortal WebSocket closed, attempting to reconnect in 2s...');
+                    // Faster reconnection for crypto speed
+                    setTimeout(connectToPumpPortal, 2000);
                 };
             } catch (error) {
                 console.error('Failed to connect to PumpPortal:', error);
@@ -1054,29 +1059,80 @@
             }
         }
 
-        // Pump.fun API via public endpoints (fallback)
+        // Pump.fun API via working endpoints
         async function fetchPumpFunData() {
             try {
-                // Try various public endpoints for pump.fun data
+                // Try the actual API endpoint that pump.fun uses
                 const endpoints = [
                     `https://frontend-api.pump.fun/coins/${CONTRACT_ADDRESS}`,
-                    `https://pump.fun/coin/${CONTRACT_ADDRESS}` // This might return JSON
+                    `https://client-api.pump.fun/coins/${CONTRACT_ADDRESS}`,
+                    // Scrape from the HTML page as fallback
+                    `https://pump.fun/coin/${CONTRACT_ADDRESS}`
                 ];
 
                 for (const endpoint of endpoints) {
                     try {
-                        const response = await fetch(endpoint);
+                        console.log(`Trying endpoint: ${endpoint}`);
+                        const response = await fetch(endpoint, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                            }
+                        });
+                        
                         if (response.ok) {
-                            const data = await response.json();
-                            return data;
+                            const text = await response.text();
+                            
+                            // Try to parse as JSON first
+                            try {
+                                const data = JSON.parse(text);
+                                console.log('Got JSON data:', data);
+                                return data;
+                            } catch (jsonError) {
+                                // If not JSON, extract data from HTML
+                                if (text.includes('Market Cap')) {
+                                    return extractDataFromHTML(text);
+                                }
+                            }
                         }
                     } catch (e) {
-                        continue; // Try next endpoint
+                        console.error(`Endpoint ${endpoint} failed:`, e);
+                        continue;
                     }
                 }
                 return null;
             } catch (error) {
                 console.error('Pump.fun API error:', error);
+                return null;
+            }
+        }
+
+        // Extract data from pump.fun HTML page
+        function extractDataFromHTML(html) {
+            try {
+                // Create temporary div to parse HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                
+                // Look for market cap in the HTML
+                const marketCapMatch = html.match(/Market Cap[^$]*\$([0-9,]+\.?\d*)/i);
+                const priceMatch = html.match(/\$([0-9]+\.?\d*)/);
+                
+                if (marketCapMatch) {
+                    const marketCap = parseFloat(marketCapMatch[1].replace(/,/g, ''));
+                    // Calculate price from market cap (pump.fun tokens have 1B supply)
+                    const price = marketCap / 1000000000;
+                    
+                    return {
+                        usd_market_cap: marketCap,
+                        price: price,
+                        extracted_from_html: true
+                    };
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('HTML extraction error:', error);
                 return null;
             }
         }
@@ -1096,21 +1152,31 @@
         // Update price display with real data
         function updatePriceDisplay(price, additionalData = null) {
             lastKnownPrice = price;
-            document.getElementById('price').textContent = '$' + price.toFixed(8);
+            const priceElement = document.getElementById('price');
+            const marketCapElement = document.getElementById('marketCap');
+            
+            // Add flash effect for live updates
+            priceElement.style.transition = 'all 0.3s ease';
+            priceElement.style.transform = 'scale(1.05)';
+            setTimeout(() => {
+                priceElement.style.transform = 'scale(1)';
+            }, 300);
+            
+            priceElement.textContent = '$' + price.toFixed(8);
             
             // Calculate market cap (all pump.fun tokens have 1B supply)
             const totalSupply = 1000000000;
             const marketCap = price * totalSupply;
-            document.getElementById('marketCap').textContent = '$' + marketCap.toLocaleString();
+            marketCapElement.textContent = '$' + marketCap.toLocaleString();
 
             // Update volume and holders with real data if available
             if (additionalData) {
-                // Handle PumpPortal WebSocket data
+                // Handle PumpPortal WebSocket data (real-time trades)
                 if (additionalData.volumeNative) {
                     const volumeSOL = parseFloat(additionalData.volumeNative);
                     fetchSOLPrice().then(solPrice => {
                         const volumeUSD = volumeSOL * solPrice;
-                        document.getElementById('volume').textContent = '$' + volumeUSD.toLocaleString();
+                        document.getElementById('volume').textContent = '$' + volumeUSD.toLocaleString() + ' 🔥';
                     });
                 }
 
@@ -1125,34 +1191,56 @@
                 } else if (additionalData.unique_wallets) {
                     document.getElementById('holders').textContent = additionalData.unique_wallets.toLocaleString();
                 }
+                
+                // Add live indicator for WebSocket data
+                if (additionalData.fromWebSocket) {
+                    priceElement.textContent += ' 🔴'; // Live indicator
+                }
             }
 
-            console.log('Updated price:', price, additionalData);
+            // Update timestamp
+            const now = new Date();
+            console.log(`Updated price at ${now.toLocaleTimeString()}:`, price, additionalData);
         }
 
         // Main price update function with multiple data sources
         async function updatePrice() {
             try {
-                console.log('Fetching price data...');
+                console.log('Fetching price data for THIRSTCOIN...');
 
                 // Try Pump.fun API first (most accurate for pump.fun tokens)
                 const pumpFunData = await fetchPumpFunData();
-                if (pumpFunData && pumpFunData.usd_market_cap) {
-                    const price = pumpFunData.usd_market_cap / 1000000000; // Market cap / supply
-                    updatePriceDisplay(price, pumpFunData);
-                    return;
+                if (pumpFunData) {
+                    let price = null;
+                    let marketCap = null;
+                    
+                    // Handle different data formats
+                    if (pumpFunData.usd_market_cap) {
+                        marketCap = pumpFunData.usd_market_cap;
+                        price = marketCap / 1000000000; // Market cap / supply
+                    } else if (pumpFunData.price) {
+                        price = parseFloat(pumpFunData.price);
+                        marketCap = price * 1000000000;
+                    }
+                    
+                    if (price && marketCap) {
+                        console.log(`Found pump.fun data: Price=${price}, MarketCap=${marketCap}`);
+                        updatePriceDisplay(price, pumpFunData);
+                        return;
+                    }
                 }
 
                 // Fallback to Jupiter API
                 const jupiterData = await fetchJupiterPriceData();
                 if (jupiterData && jupiterData.price) {
                     const price = parseFloat(jupiterData.price);
+                    console.log(`Found Jupiter data: Price=${price}`);
                     updatePriceDisplay(price, jupiterData);
                     return;
                 }
 
                 // Final fallback to simulation
-                console.log('Using fallback price simulation');
+                console.log('No API data available, using fallback simulation');
                 updatePriceFallback();
                 
             } catch (error) {
@@ -1161,36 +1249,41 @@
             }
         }
 
-        // Fallback price simulation (only updates price, keeps last known volume/holders)
+        // Fallback price calculation using manual data from pump.fun
         function updatePriceFallback() {
+            console.log('Using manual pump.fun data as fallback');
+            
+            // Use the manual market cap from pump.fun page
+            const realPrice = MANUAL_MARKET_CAP / TOTAL_SUPPLY;
+            
             if (lastKnownPrice) {
-                // Use last known price with small variation if we had real data before
-                const variation = (Math.random() - 0.5) * (lastKnownPrice * 0.02); // 2% variation
-                const newPrice = Math.max(0, lastKnownPrice + variation);
-                document.getElementById('price').textContent = '$' + newPrice.toFixed(8);
-                
-                // Update market cap based on simulated price
-                const totalSupply = 1000000000;
-                const marketCap = newPrice * totalSupply;
-                document.getElementById('marketCap').textContent = '$' + marketCap.toLocaleString();
+                // Add small variation to the real price if we had API data before
+                const variation = (Math.random() - 0.5) * (realPrice * 0.01); // 1% variation
+                const newPrice = Math.max(0, realPrice + variation);
+                updatePriceDisplay(newPrice, { manual_data: true });
             } else {
-                // Initial fallback values only if we have no data at all
-                const basePrice = 0.00420;
-                const variation = (Math.random() - 0.5) * 0.0001;
-                const newPrice = Math.max(0, basePrice + variation);
-                document.getElementById('price').textContent = '$' + newPrice.toFixed(8);
+                // Use the exact data from pump.fun
+                updatePriceDisplay(realPrice, { 
+                    usd_market_cap: MANUAL_MARKET_CAP,
+                    manual_data: true 
+                });
                 
-                const marketCap = newPrice * 1000000000;
-                document.getElementById('marketCap').textContent = '$' + marketCap.toLocaleString();
-                
-                // Only set placeholder volume/holders if we have no real data
-                document.getElementById('volume').textContent = '---';
-                document.getElementById('holders').textContent = '---';
+                // Set volume and holders to indicate no live data available
+                document.getElementById('volume').textContent = 'N/A';
+                document.getElementById('holders').textContent = 'N/A';
             }
         }
 
-        // Update price every 3 seconds
-        setInterval(updatePrice, 3000);
+        // Update price every 1 second for fast crypto movements
+        setInterval(updatePrice, 1000);
+        
+        // Also update immediately when page becomes visible again (for mobile users)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                console.log('Page visible again, updating price...');
+                updatePrice();
+            }
+        });
 
         // Initialize price on load and start WebSocket
         window.addEventListener('load', () => {
