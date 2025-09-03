@@ -1070,7 +1070,7 @@
 
                 for (const endpoint of endpoints) {
                     try {
-                        console.log(`Trying DexScreener endpoint: ${endpoint}`);
+                        console.log(`🔍 Trying DexScreener endpoint: ${endpoint}`);
                         const response = await fetch(endpoint, {
                             headers: {
                                 'Accept': 'application/json'
@@ -1079,46 +1079,71 @@
                         
                         if (response.ok) {
                             const data = await response.json();
-                            console.log('Got DexScreener data:', data);
+                            console.log('✅ Got DexScreener API response:', data);
                             
-                            // DexScreener returns either a pairs array or tokens array
-                            const tokenData = data.pairs?.[0] || data.tokens?.[0];
-                            if (tokenData) {
-                                console.log('Raw DexScreener token data:', tokenData);
-                                
-                                // Extract transaction data for holder activity
-                                const txns24h = tokenData.txns?.h24;
-                                const totalTxns = txns24h ? (txns24h.buys || 0) + (txns24h.sells || 0) : 0;
-                                
-                                const extractedData = {
-                                    price: tokenData.priceUsd ? parseFloat(tokenData.priceUsd) : null,
-                                    usd_market_cap: tokenData.marketCap ? parseFloat(tokenData.marketCap) : (tokenData.fdv ? parseFloat(tokenData.fdv) : null),
-                                    volume_24h_usd: tokenData.volume?.h24 ? parseFloat(tokenData.volume.h24) : 0,
-                                    price_change_24h: tokenData.priceChange?.h24 ? parseFloat(tokenData.priceChange.h24) : null,
-                                    liquidity_usd: tokenData.liquidity?.usd ? parseFloat(tokenData.liquidity.usd) : null,
-                                    pair_address: tokenData.pairAddress,
-                                    dex: tokenData.dexId,
-                                    total_transactions_24h: totalTxns,
-                                    buys_24h: txns24h?.buys || 0,
-                                    sells_24h: txns24h?.sells || 0,
-                                    pair_created_at: tokenData.pairCreatedAt,
-                                    from_dexscreener: true
-                                };
-                                
-                                console.log('📊 DexScreener extracted data:', extractedData);
-                                return extractedData;
+                            // Check if we got an array response
+                            if (Array.isArray(data) && data.length > 0) {
+                                const tokenData = data[0]; // First item in array
+                                console.log('📊 Processing token data from array:', tokenData);
+                                return processDexScreenerToken(tokenData);
                             }
+                            // Check if it has pairs or tokens property
+                            else if (data.pairs && data.pairs.length > 0) {
+                                const tokenData = data.pairs[0];
+                                console.log('📊 Processing token data from pairs:', tokenData);
+                                return processDexScreenerToken(tokenData);
+                            }
+                            else if (data.tokens && data.tokens.length > 0) {
+                                const tokenData = data.tokens[0];
+                                console.log('📊 Processing token data from tokens:', tokenData);
+                                return processDexScreenerToken(tokenData);
+                            }
+                            else {
+                                console.log('❌ No token data found in DexScreener response structure:', data);
+                            }
+                        } else {
+                            console.log(`❌ DexScreener API error: ${response.status} ${response.statusText}`);
                         }
                     } catch (e) {
-                        console.error(`DexScreener endpoint ${endpoint} failed:`, e);
+                        console.error(`❌ DexScreener endpoint ${endpoint} failed:`, e);
                         continue;
                     }
                 }
+                console.log('❌ All DexScreener endpoints failed');
                 return null;
             } catch (error) {
-                console.error('DexScreener API error:', error);
+                console.error('❌ DexScreener API error:', error);
                 return null;
             }
+        }
+
+        // Process DexScreener token data
+        function processDexScreenerToken(tokenData) {
+            if (!tokenData) return null;
+            
+            console.log('🔧 Raw token data structure:', Object.keys(tokenData));
+            
+            // Extract transaction data for holder activity
+            const txns24h = tokenData.txns?.h24;
+            const totalTxns = txns24h ? (txns24h.buys || 0) + (txns24h.sells || 0) : 0;
+            
+            const extractedData = {
+                price: tokenData.priceUsd ? parseFloat(tokenData.priceUsd) : null,
+                usd_market_cap: tokenData.marketCap ? parseFloat(tokenData.marketCap) : (tokenData.fdv ? parseFloat(tokenData.fdv) : null),
+                volume_24h_usd: tokenData.volume?.h24 ? parseFloat(tokenData.volume.h24) : 0,
+                price_change_24h: tokenData.priceChange?.h24 ? parseFloat(tokenData.priceChange.h24) : null,
+                liquidity_usd: tokenData.liquidity?.usd ? parseFloat(tokenData.liquidity.usd) : null,
+                pair_address: tokenData.pairAddress,
+                dex: tokenData.dexId,
+                total_transactions_24h: totalTxns,
+                buys_24h: txns24h?.buys || 0,
+                sells_24h: txns24h?.sells || 0,
+                pair_created_at: tokenData.pairCreatedAt,
+                from_dexscreener: true
+            };
+            
+            console.log('🎯 DexScreener FINAL extracted data:', extractedData);
+            return extractedData;
         }
 
         // Pump.fun API via working endpoints (fallback)
