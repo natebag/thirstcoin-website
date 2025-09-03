@@ -679,22 +679,22 @@
 
         <section class="price-ticker">
             <h2 class="neon-yellow" style="font-size: 2rem; margin-bottom: 1rem;">LIVE THIRST LEVELS</h2>
-            <div class="price-display neon-green" id="price">$0.00420</div>
+            <div class="price-display neon-green" id="price">Loading...</div>
             <p class="neon-pink">Contract: H9Qkr9cLE7ySNnnttug5C3qTuMRa5rKt2JXw5gMmpump 
                 <button class="copy-btn neon-pink" onclick="copyContract()">COPY</button>
             </p>
             <div class="price-stats">
                 <div class="stat-item neon-blue">
                     <h3>Market Cap</h3>
-                    <p id="marketCap">$69,420</p>
+                    <p id="marketCap">Loading...</p>
                 </div>
                 <div class="stat-item neon-yellow">
                     <h3>24h Volume</h3>
-                    <p id="volume">$13,337</p>
+                    <p id="volume">Loading...</p>
                 </div>
                 <div class="stat-item neon-green">
                     <h3>Holders</h3>
-                    <p id="holders">1,337</p>
+                    <p id="holders">Loading...</p>
                 </div>
                 <div class="stat-item neon-pink">
                     <h3>Thirst Level</h3>
@@ -1103,13 +1103,28 @@
             const marketCap = price * totalSupply;
             document.getElementById('marketCap').textContent = '$' + marketCap.toLocaleString();
 
-            // Update volume if available
-            if (additionalData && additionalData.volumeNative) {
-                const volumeSOL = parseFloat(additionalData.volumeNative);
-                fetchSOLPrice().then(solPrice => {
-                    const volumeUSD = volumeSOL * solPrice;
-                    document.getElementById('volume').textContent = '$' + volumeUSD.toLocaleString();
-                });
+            // Update volume and holders with real data if available
+            if (additionalData) {
+                // Handle PumpPortal WebSocket data
+                if (additionalData.volumeNative) {
+                    const volumeSOL = parseFloat(additionalData.volumeNative);
+                    fetchSOLPrice().then(solPrice => {
+                        const volumeUSD = volumeSOL * solPrice;
+                        document.getElementById('volume').textContent = '$' + volumeUSD.toLocaleString();
+                    });
+                }
+
+                // Handle Pump.fun API data
+                if (additionalData.volume_24h_usd) {
+                    document.getElementById('volume').textContent = '$' + parseFloat(additionalData.volume_24h_usd).toLocaleString();
+                }
+
+                // Update holders count if available
+                if (additionalData.holder_count) {
+                    document.getElementById('holders').textContent = additionalData.holder_count.toLocaleString();
+                } else if (additionalData.unique_wallets) {
+                    document.getElementById('holders').textContent = additionalData.unique_wallets.toLocaleString();
+                }
             }
 
             console.log('Updated price:', price, additionalData);
@@ -1146,21 +1161,32 @@
             }
         }
 
-        // Fallback price simulation
+        // Fallback price simulation (only updates price, keeps last known volume/holders)
         function updatePriceFallback() {
-            const basePrice = 0.00420;
-            const variation = (Math.random() - 0.5) * 0.0001;
-            const newPrice = Math.max(0, basePrice + variation);
-            document.getElementById('price').textContent = '$' + newPrice.toFixed(6);
-            
-            // Update other stats with simulation
-            const marketCap = Math.floor(69420 + (Math.random() - 0.5) * 10000);
-            const volume = Math.floor(13337 + (Math.random() - 0.5) * 5000);
-            const holders = Math.floor(1337 + Math.random() * 100);
-            
-            document.getElementById('marketCap').textContent = '$' + marketCap.toLocaleString();
-            document.getElementById('volume').textContent = '$' + volume.toLocaleString();
-            document.getElementById('holders').textContent = holders.toLocaleString();
+            if (lastKnownPrice) {
+                // Use last known price with small variation if we had real data before
+                const variation = (Math.random() - 0.5) * (lastKnownPrice * 0.02); // 2% variation
+                const newPrice = Math.max(0, lastKnownPrice + variation);
+                document.getElementById('price').textContent = '$' + newPrice.toFixed(8);
+                
+                // Update market cap based on simulated price
+                const totalSupply = 1000000000;
+                const marketCap = newPrice * totalSupply;
+                document.getElementById('marketCap').textContent = '$' + marketCap.toLocaleString();
+            } else {
+                // Initial fallback values only if we have no data at all
+                const basePrice = 0.00420;
+                const variation = (Math.random() - 0.5) * 0.0001;
+                const newPrice = Math.max(0, basePrice + variation);
+                document.getElementById('price').textContent = '$' + newPrice.toFixed(8);
+                
+                const marketCap = newPrice * 1000000000;
+                document.getElementById('marketCap').textContent = '$' + marketCap.toLocaleString();
+                
+                // Only set placeholder volume/holders if we have no real data
+                document.getElementById('volume').textContent = '---';
+                document.getElementById('holders').textContent = '---';
+            }
         }
 
         // Update price every 3 seconds
