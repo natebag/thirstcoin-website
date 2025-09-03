@@ -1090,12 +1090,12 @@
                                 const txns24h = tokenData.txns?.h24;
                                 const totalTxns = txns24h ? (txns24h.buys || 0) + (txns24h.sells || 0) : 0;
                                 
-                                return {
-                                    price: parseFloat(tokenData.priceUsd),
-                                    usd_market_cap: parseFloat(tokenData.marketCap || tokenData.fdv),
-                                    volume_24h_usd: parseFloat(tokenData.volume?.h24),
-                                    price_change_24h: parseFloat(tokenData.priceChange?.h24),
-                                    liquidity_usd: parseFloat(tokenData.liquidity?.usd),
+                                const extractedData = {
+                                    price: tokenData.priceUsd ? parseFloat(tokenData.priceUsd) : null,
+                                    usd_market_cap: tokenData.marketCap ? parseFloat(tokenData.marketCap) : (tokenData.fdv ? parseFloat(tokenData.fdv) : null),
+                                    volume_24h_usd: tokenData.volume?.h24 ? parseFloat(tokenData.volume.h24) : 0,
+                                    price_change_24h: tokenData.priceChange?.h24 ? parseFloat(tokenData.priceChange.h24) : null,
+                                    liquidity_usd: tokenData.liquidity?.usd ? parseFloat(tokenData.liquidity.usd) : null,
                                     pair_address: tokenData.pairAddress,
                                     dex: tokenData.dexId,
                                     total_transactions_24h: totalTxns,
@@ -1104,6 +1104,9 @@
                                     pair_created_at: tokenData.pairCreatedAt,
                                     from_dexscreener: true
                                 };
+                                
+                                console.log('📊 DexScreener extracted data:', extractedData);
+                                return extractedData;
                             }
                         }
                     } catch (e) {
@@ -1232,35 +1235,46 @@
             if (additionalData) {
                 // Handle DexScreener data (most comprehensive)
                 if (additionalData.from_dexscreener) {
+                    console.log('🔄 Updating display with DexScreener data:', additionalData);
+                    
                     // Volume with DexScreener data
+                    const volumeElement = document.getElementById('volume');
                     if (additionalData.volume_24h_usd && additionalData.volume_24h_usd > 0) {
-                        document.getElementById('volume').textContent = '$' + additionalData.volume_24h_usd.toLocaleString() + ' 📊';
+                        const volumeText = '$' + additionalData.volume_24h_usd.toLocaleString() + ' 📊';
+                        volumeElement.textContent = volumeText;
+                        console.log('✅ Volume updated to:', volumeText);
                     } else {
-                        document.getElementById('volume').textContent = '$0 📊';
+                        volumeElement.textContent = '$0 📊';
+                        console.log('✅ Volume set to $0 (no volume data)');
                     }
                     
                     // Use transaction count as proxy for holders activity
+                    const holdersElement = document.getElementById('holders');
                     if (additionalData.total_transactions_24h > 0) {
-                        const buyersSellers = additionalData.buys_24h + additionalData.sells_24h;
-                        document.getElementById('holders').textContent = `${additionalData.total_transactions_24h} txns (${additionalData.buys_24h}B/${additionalData.sells_24h}S)`;
+                        const holdersText = `${additionalData.total_transactions_24h} txns (${additionalData.buys_24h}B/${additionalData.sells_24h}S)`;
+                        holdersElement.textContent = holdersText;
+                        console.log('✅ Holders updated to:', holdersText);
                     } else {
-                        document.getElementById('holders').textContent = 'No recent activity';
+                        holdersElement.textContent = 'No recent activity';
+                        console.log('✅ Holders set to no activity');
                     }
                     
                     // Add price change indicator
                     if (additionalData.price_change_24h !== undefined && !isNaN(additionalData.price_change_24h)) {
                         const changePercent = additionalData.price_change_24h;
                         const changeIcon = changePercent > 0 ? '🟢' : changePercent < 0 ? '🔴' : '⚪';
-                        priceElement.textContent += ` ${changeIcon}${Math.abs(changePercent).toFixed(1)}%`;
+                        const changeText = ` ${changeIcon}${Math.abs(changePercent).toFixed(1)}%`;
+                        priceElement.textContent += changeText;
+                        console.log('✅ Price change added:', changeText);
                     }
                     
                     // Show additional info in console
                     if (additionalData.liquidity_usd) {
-                        console.log(`Liquidity: $${additionalData.liquidity_usd.toLocaleString()}`);
+                        console.log(`💧 Liquidity: $${additionalData.liquidity_usd.toLocaleString()}`);
                     }
                     if (additionalData.pair_created_at) {
                         const created = new Date(additionalData.pair_created_at * 1000);
-                        console.log(`Pair created: ${created.toLocaleString()}`);
+                        console.log(`🕐 Pair created: ${created.toLocaleString()}`);
                     }
                 }
                 
@@ -1303,10 +1317,17 @@
 
                 // Try DexScreener API first - most comprehensive and reliable
                 const dexScreenerData = await fetchDexScreenerData();
-                if (dexScreenerData && dexScreenerData.price) {
-                    console.log(`Found DexScreener data: Price=${dexScreenerData.price}, MarketCap=${dexScreenerData.usd_market_cap}, Volume=${dexScreenerData.volume_24h_usd}`);
-                    updatePriceDisplay(dexScreenerData.price, dexScreenerData);
-                    return;
+                if (dexScreenerData) {
+                    console.log('✅ DexScreener data received:', dexScreenerData);
+                    if (dexScreenerData.price) {
+                        console.log(`📊 DexScreener: Price=${dexScreenerData.price}, MarketCap=${dexScreenerData.usd_market_cap}, Volume=${dexScreenerData.volume_24h_usd}, Txns=${dexScreenerData.total_transactions_24h}`);
+                        updatePriceDisplay(dexScreenerData.price, dexScreenerData);
+                        return;
+                    } else {
+                        console.log('❌ DexScreener data missing price field:', dexScreenerData);
+                    }
+                } else {
+                    console.log('❌ No DexScreener data received');
                 }
 
                 // Fallback to Pump.fun API
@@ -1390,10 +1411,29 @@
             }
         });
 
+        // Manual test function to verify display works (for debugging)
+        function testDexScreenerDisplay() {
+            console.log('🧪 Testing DexScreener display with known good data...');
+            const testData = {
+                price: 0.00006897,
+                usd_market_cap: 68975.67,
+                volume_24h_usd: 106028.29,
+                price_change_24h: 968,
+                total_transactions_24h: 900,
+                buys_24h: 579,
+                sells_24h: 321,
+                from_dexscreener: true
+            };
+            updatePriceDisplay(testData.price, testData);
+        }
+
         // Initialize price on load and start WebSocket
         window.addEventListener('load', () => {
             updatePrice();
             connectToPumpPortal();
+            
+            // Add test function to global scope for debugging
+            window.testDexScreenerDisplay = testDexScreenerDisplay;
         });
 
         // VR Modal Functions
