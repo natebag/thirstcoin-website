@@ -693,8 +693,8 @@
                     <p id="volume">Loading...</p>
                 </div>
                 <div class="stat-item neon-green">
-                    <h3>Holders</h3>
-                    <p id="holders">Loading...</p>
+                    <h3>Thirst Meter</h3>
+                    <p id="thirstMeter">Loading...</p>
                 </div>
                 <div class="stat-item neon-pink">
                     <h3>Thirst Level</h3>
@@ -1273,15 +1273,25 @@
                         console.log('✅ Volume set to $0 (no volume data)');
                     }
                     
-                    // Use transaction count as proxy for holders activity
-                    const holdersElement = document.getElementById('holders');
-                    if (additionalData.total_transactions_24h > 0) {
-                        const holdersText = `${additionalData.total_transactions_24h} txns (${additionalData.buys_24h}B/${additionalData.sells_24h}S)`;
-                        holdersElement.textContent = holdersText;
-                        console.log('✅ Holders updated to:', holdersText);
+                    // Thirst Meter - show buy activity and big buys
+                    const thirstMeterElement = document.getElementById('thirstMeter');
+                    if (additionalData.buys_24h > 0) {
+                        // Calculate buy percentage and show recent big buy activity
+                        const buyPercentage = additionalData.total_transactions_24h > 0 ? 
+                            Math.round((additionalData.buys_24h / additionalData.total_transactions_24h) * 100) : 0;
+                        
+                        // Show buy dominance and volume
+                        if (additionalData.volume_24h_usd > 1000) {
+                            const thirstText = `${additionalData.buys_24h} buys (${buyPercentage}%) 🔥`;
+                            thirstMeterElement.textContent = thirstText;
+                            console.log('✅ Thirst Meter updated to:', thirstText);
+                        } else {
+                            thirstMeterElement.textContent = `${additionalData.buys_24h} buys today 🚰`;
+                            console.log('✅ Thirst Meter updated for low volume');
+                        }
                     } else {
-                        holdersElement.textContent = 'No recent activity';
-                        console.log('✅ Holders set to no activity');
+                        thirstMeterElement.textContent = 'Waiting for thirst... 💧';
+                        console.log('✅ Thirst Meter set to waiting state');
                     }
                     
                     // Add price change indicator
@@ -1317,11 +1327,11 @@
                     document.getElementById('volume').textContent = '$' + parseFloat(additionalData.volume_24h_usd).toLocaleString();
                 }
 
-                // Update holders count if available
+                // Update thirst meter for other data sources
                 if (additionalData.holder_count) {
-                    document.getElementById('holders').textContent = additionalData.holder_count.toLocaleString();
+                    document.getElementById('thirstMeter').textContent = `${additionalData.holder_count.toLocaleString()} holders 👥`;
                 } else if (additionalData.unique_wallets) {
-                    document.getElementById('holders').textContent = additionalData.unique_wallets.toLocaleString();
+                    document.getElementById('thirstMeter').textContent = `${additionalData.unique_wallets.toLocaleString()} wallets 💰`;
                 }
                 
                 // Add live indicator for WebSocket data
@@ -1419,8 +1429,8 @@
                 if (document.getElementById('volume').textContent === 'Loading...') {
                     document.getElementById('volume').textContent = 'N/A';
                 }
-                if (document.getElementById('holders').textContent === 'Loading...') {
-                    document.getElementById('holders').textContent = 'N/A';
+                if (document.getElementById('thirstMeter').textContent === 'Loading...') {
+                    document.getElementById('thirstMeter').textContent = 'Building thirst... 🔥';
                 }
             }
         }
@@ -1450,6 +1460,12 @@
                 from_dexscreener: true
             };
             updatePriceDisplay(testData.price, testData);
+        }
+
+        // Test Thirst Meter specifically
+        function testThirstMeter() {
+            console.log('🔥 Testing Thirst Meter with high buy activity...');
+            document.getElementById('thirstMeter').textContent = '579 buys (64%) 🔥';
         }
 
         // Initialize price on load and start WebSocket
