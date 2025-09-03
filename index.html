@@ -1059,7 +1059,56 @@
             }
         }
 
-        // Pump.fun API via working endpoints
+        // DexScreener API for comprehensive trading data
+        async function fetchDexScreenerData() {
+            try {
+                // DexScreener API endpoints - much more reliable!
+                const endpoints = [
+                    `https://api.dexscreener.com/token-pairs/v1/solana/${CONTRACT_ADDRESS}`,
+                    `https://api.dexscreener.com/tokens/v1/solana/${CONTRACT_ADDRESS}`
+                ];
+
+                for (const endpoint of endpoints) {
+                    try {
+                        console.log(`Trying DexScreener endpoint: ${endpoint}`);
+                        const response = await fetch(endpoint, {
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            console.log('Got DexScreener data:', data);
+                            
+                            // DexScreener returns either a pairs array or tokens array
+                            const tokenData = data.pairs?.[0] || data.tokens?.[0];
+                            if (tokenData) {
+                                return {
+                                    price: parseFloat(tokenData.priceUsd),
+                                    usd_market_cap: parseFloat(tokenData.marketCap),
+                                    volume_24h_usd: parseFloat(tokenData.volume?.h24),
+                                    price_change_24h: parseFloat(tokenData.priceChange?.h24),
+                                    liquidity_usd: parseFloat(tokenData.liquidity?.usd),
+                                    pair_address: tokenData.pairAddress,
+                                    dex: tokenData.dexId,
+                                    from_dexscreener: true
+                                };
+                            }
+                        }
+                    } catch (e) {
+                        console.error(`DexScreener endpoint ${endpoint} failed:`, e);
+                        continue;
+                    }
+                }
+                return null;
+            } catch (error) {
+                console.error('DexScreener API error:', error);
+                return null;
+            }
+        }
+
+        // Pump.fun API via working endpoints (fallback)
         async function fetchPumpFunData() {
             try {
                 // Try the actual API endpoint that pump.fun uses
@@ -1171,8 +1220,28 @@
 
             // Update volume and holders with real data if available
             if (additionalData) {
+                // Handle DexScreener data (most comprehensive)
+                if (additionalData.from_dexscreener) {
+                    // Volume with DexScreener data
+                    if (additionalData.volume_24h_usd && additionalData.volume_24h_usd > 0) {
+                        document.getElementById('volume').textContent = '$' + additionalData.volume_24h_usd.toLocaleString() + ' 📊';
+                    }
+                    
+                    // Add price change indicator
+                    if (additionalData.price_change_24h) {
+                        const changePercent = additionalData.price_change_24h;
+                        const changeIcon = changePercent > 0 ? '🟢' : changePercent < 0 ? '🔴' : '⚪';
+                        priceElement.textContent += ` ${changeIcon}${Math.abs(changePercent).toFixed(2)}%`;
+                    }
+                    
+                    // Show liquidity info
+                    if (additionalData.liquidity_usd) {
+                        console.log(`Liquidity: $${additionalData.liquidity_usd.toLocaleString()}`);
+                    }
+                }
+                
                 // Handle PumpPortal WebSocket data (real-time trades)
-                if (additionalData.volumeNative) {
+                else if (additionalData.volumeNative) {
                     const volumeSOL = parseFloat(additionalData.volumeNative);
                     fetchSOLPrice().then(solPrice => {
                         const volumeUSD = volumeSOL * solPrice;
@@ -1180,8 +1249,8 @@
                     });
                 }
 
-                // Handle Pump.fun API data
-                if (additionalData.volume_24h_usd) {
+                // Handle other API data
+                else if (additionalData.volume_24h_usd) {
                     document.getElementById('volume').textContent = '$' + parseFloat(additionalData.volume_24h_usd).toLocaleString();
                 }
 
@@ -1208,7 +1277,15 @@
             try {
                 console.log('Fetching price data for THIRSTCOIN...');
 
-                // Try Pump.fun API first (most accurate for pump.fun tokens)
+                // Try DexScreener API first - most comprehensive and reliable
+                const dexScreenerData = await fetchDexScreenerData();
+                if (dexScreenerData && dexScreenerData.price) {
+                    console.log(`Found DexScreener data: Price=${dexScreenerData.price}, MarketCap=${dexScreenerData.usd_market_cap}, Volume=${dexScreenerData.volume_24h_usd}`);
+                    updatePriceDisplay(dexScreenerData.price, dexScreenerData);
+                    return;
+                }
+
+                // Fallback to Pump.fun API
                 const pumpFunData = await fetchPumpFunData();
                 if (pumpFunData) {
                     let price = null;
@@ -1230,7 +1307,7 @@
                     }
                 }
 
-                // Fallback to Jupiter API
+                // Third fallback to Jupiter API
                 const jupiterData = await fetchJupiterPriceData();
                 if (jupiterData && jupiterData.price) {
                     const price = parseFloat(jupiterData.price);
@@ -1239,8 +1316,8 @@
                     return;
                 }
 
-                // Final fallback to simulation
-                console.log('No API data available, using fallback simulation');
+                // Final fallback to manual data
+                console.log('No API data available, using manual fallback data');
                 updatePriceFallback();
                 
             } catch (error) {
